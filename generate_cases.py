@@ -1,11 +1,21 @@
 import numpy as np
 from sklearn.datasets import make_blobs, make_moons, make_circles
+import os  # <-- 1. Import the OS module
+
+# --- 2. Define the output folder name ---
+OUTPUT_DIR = "generated_datasets"
 
 def save_points(points, filename):
-    """Saves an (n, 2) numpy array to a text file."""
+    """Saves an (n, 2) numpy array to a text file inside the OUTPUT_DIR."""
+    
+    # --- 3. Create the full path (e.g., "generated_datasets/case_vertical_line.txt") ---
+    filepath = os.path.join(OUTPUT_DIR, filename)
+    
     # We use a space delimiter, which is easy for C (scanf) to read.
-    np.savetxt(filename, points, fmt='%.8f', delimiter=' ')
-    print(f"Generated: {filename} ({len(points)} points)")
+    np.savetxt(filepath, points, fmt='%.8f', delimiter=' ')
+    
+    # Print the full path so you know where it saved
+    print(f"Generated: {filepath} ({len(points)} points)")
 
 def gen_case_collinear_vertical(n=50):
     """Case: All points on a perfect vertical line."""
@@ -66,7 +76,11 @@ def gen_case_duplicates(n=50):
     save_points(points, "case_duplicates.txt")
 
 if __name__ == "__main__":
-    print("--- Generating Test Datasets for Convex Hull ---")
+    
+    # --- 2. (cont'd) Create the directory if it doesn't exist ---
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    
+    print(f"--- Generating Test Datasets in '{OUTPUT_DIR}' folder ---")
     
     gen_case_collinear_vertical(50)
     gen_case_collinear_horizontal(50)
