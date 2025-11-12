@@ -1,4 +1,4 @@
-#include<bits/stdc++.h>
+#include<bits/stdc++.h> // This already includes <algorithm> for std::is_sorted
 #include<fstream>
 #include<string>
 using namespace std;
@@ -7,7 +7,7 @@ struct pt {
     double x, y;
 };
 
-// ... (orientation, cw, ccw, and convex_hull functions are UNCHANGED) ...
+// ... (orientation, cw, ccw functions are UNCHANGED) ...
 int orientation(pt a, pt b, pt c) {
     double v = a.x*(b.y-c.y)+b.x*(c.y-a.y)+c.x*(a.y-b.y);
     if (v < 0) return -1; 
@@ -24,13 +24,25 @@ bool ccw(pt a, pt b, pt c, bool include_collinear) {
     return o > 0 || (include_collinear && o == 0);
 }
 
+// --- !!! MODIFIED convex_hull function !!! ---
 void convex_hull(vector<pt>& a, bool include_collinear = false) {
     if (a.size() <= 2)
         return;
 
-    sort(a.begin(), a.end(), [](pt a, pt b) {
+    // --- 1. Define the comparison lambda once ---
+    auto lexicographical_compare = [](pt a, pt b) {
         return make_pair(a.x, a.y) < make_pair(b.x, b.y);
-    });
+    };
+
+    // --- 2. Add the O(n) check ---
+    //    Only sort if the vector is NOT already sorted.
+    if (!is_sorted(a.begin(), a.end(), lexicographical_compare)) {
+        // --- 3. Run the O(n log n) sort only if needed ---
+        sort(a.begin(), a.end(), lexicographical_compare);
+    }
+    // --- End of optimization ---
+
+
     pt p1 = a[0], p2 = a.back();
     vector<pt> up, down;
     up.push_back(p1);
@@ -75,7 +87,7 @@ void solve(vector<pt>& a, ofstream &outfile, int p)
     }
 }
 
-// --- !!! MODIFIED main function !!! ---
+// --- main function remains unchanged ---
 int main(int argc, char* argv[])
 {
     // 1. Check for the correct number of command-line arguments
