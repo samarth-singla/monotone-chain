@@ -1,14 +1,17 @@
 #include<bits/stdc++.h>
 #include<fstream>
+#include<string>
 using namespace std;
+
 struct pt {
     double x, y;
 };
 
+// ... (orientation, cw, ccw, convex_hull functions remain unchanged) ...
 int orientation(pt a, pt b, pt c) {
     double v = a.x*(b.y-c.y)+b.x*(c.y-a.y)+c.x*(a.y-b.y);
-    if (v < 0) return -1; // clockwise
-    if (v > 0) return +1; // counter-clockwise
+    if (v < 0) return -1; 
+    if (v > 0) return +1;
     return 0;
 }
 
@@ -22,7 +25,7 @@ bool ccw(pt a, pt b, pt c, bool include_collinear) {
 }
 
 void convex_hull(vector<pt>& a, bool include_collinear = false) {
-    if (a.size() == 1)
+    if (a.size() <= 2)
         return;
 
     sort(a.begin(), a.end(), [](pt a, pt b) {
@@ -55,37 +58,79 @@ void convex_hull(vector<pt>& a, bool include_collinear = false) {
     for (int i = down.size() - 2; i > 0; i--)
         a.push_back(down[i]);
 }
-void solve(ifstream &file,ofstream &outfile,int p)
+
+// --- MODIFIED solve function ---
+void solve(vector<pt>& a, ofstream &outfile, int p)
 {
-    int n;
-    file>>n;
-    vector<pt>a(n);
-    for(int i=0;i<n;i++)
+    // The vector 'a' already contains all points.
+    
+    // Process the convex hull
+    convex_hull(a, 0); 
+    
+    // Output the results WITHOUT "CASE 1"
+    for(size_t i = 0; i < a.size(); i++)
     {
-        int x,y; file>>x>>y;
-        a[i].x=x;
-        a[i].y=y;
-    }
-    convex_hull(a,0);
-    outfile<<"CASE "<<p<<endl;
-    for(int i=0;i<a.size();i++)
-    {
-        outfile<<a[i].x<<" "<<a[i].y<<endl;
+        // Use fixed and setprecision for double coordinates
+        outfile << fixed << setprecision(8) << a[i].x << " " << a[i].y << endl;
     }
 }
+
+// --- main function remains unchanged ---
 int main()
 {
-    ifstream file("");
-    ofstream outfile("output.txt");
-    int t;
-    file>>t;  
-    int p=1;  
-    while(p<=t)
-    {
-        solve(file,outfile,p);
-        ++p;
+    // 1. Prompt the user for the input filename
+    cout << "Enter the input filename (e.g., points.txt): ";
+    string input_filename;
+    cin >> input_filename; 
+
+    // 2. Construct the output filename
+    string output_filename = input_filename;
+    size_t dot_pos = output_filename.rfind('.');
+    
+    if (dot_pos == string::npos) {
+        output_filename += "_output.txt";
+    } else {
+        output_filename.insert(dot_pos, "_output");
     }
+
+    // 3. Open the file streams
+    ifstream file(input_filename);
+    ofstream outfile(output_filename);
+
+    if (!file.is_open()) {
+        cerr << "Error: Could not open input file " << input_filename << endl;
+        return 1;
+    }
+    if (!outfile.is_open()) {
+        cerr << "Error: Could not open output file " << output_filename << endl;
+        return 1;
+    }
+    
+    // 4. Read ALL points from the file
+    vector<pt> all_points;
+    double x_val, y_val;
+    while (file >> x_val >> y_val) {
+        all_points.push_back({x_val, y_val});
+    }
+
+    if (all_points.empty()) {
+        cerr << "Error: Input file " << input_filename << " contains no valid points." << endl;
+        return 1;
+    }
+
+    // 5. Run the solve function once
+    cout << "Processing " << all_points.size() << " points..." << endl;
+    // We pass 1 for 'p' but the solve function no longer uses it for output.
+    solve(all_points, outfile, 1); 
+
+    // 6. Close files and exit
     file.close();
     outfile.close();
+    cout << "Processing complete! Results saved to: " << output_filename << endl;
+    
     return 0;
 }
+
+
+//BASE CASE->all sorted points
+//
