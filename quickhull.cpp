@@ -3,11 +3,12 @@
 #include <cmath>
 #include <limits>
 #include <cstring>
-#include <fstream>   // <-- Added
-#include <iostream>  // <-- Added
-#include <string>    // <-- Added
-#include <iomanip>   // <-- Added
-#include <stdexcept> // <-- Added
+#include <fstream>   
+#include <iostream>  
+#include <string>    
+#include <iomanip>   
+#include <stdexcept> 
+#include <sys/stat.h> // For mkdir
 
 #ifdef _OPENMP
     #include <omp.h>
@@ -25,7 +26,7 @@
     #define omp_reduction(op, var)
 #endif
 
-// --- YOUR QUICKHULL NAMESPACE (Unchanged) ---
+// --- YOUR QUICKHULL NAMESPACE (Complete) ---
 namespace QuickHull {
 
 struct Point {
@@ -260,40 +261,57 @@ std::vector<Point> computeConvexHull(const std::vector<Point>& inputPoints) {
     }
     
     return hull;
-}} 
+}} // End namespace QuickHull
 
-// --- NEW main() FUNCTION TO MAKE THIS AN EXECUTABLE ---
 
+// --- Main Function (with new output logic) ---
 using namespace std;
 
 int main(int argc, char* argv[])
 {
-    // 1. Check for the correct number of command-line arguments
+    // 1. Check arguments
     if (argc != 2) {
         cerr << "Error: Incorrect usage." << endl;
         cerr << "Usage: " << argv[0] << " <input_filename.txt>" << endl; 
-        return 1; // Return an error code
+        return 1; 
     }
 
-    // 2. Get the input filename from the command-line argument
-    string input_filename = argv[1]; 
+    // 2. Get the input filename
+    string input_path = argv[1]; 
 
-    // 3. Construct the output filename
-    string output_filename = input_filename;
-    size_t dot_pos = output_filename.rfind('.');
+    // --- 3. CONSTRUCT OUTPUT FILENAME ---
+    string output_dir = "QUICKHULL_OUTPUT";
     
-    if (dot_pos == string::npos) {
-        output_filename += "_output.txt";
-    } else {
-        output_filename.insert(dot_pos, "_output");
+    // Create the directory
+    mkdir(output_dir.c_str(), 0777); 
+    
+    // Get the base filename from the input path
+    string base_filename = input_path;
+    size_t last_slash = input_path.rfind('/');
+    if (last_slash != string::npos) {
+        base_filename = input_path.substr(last_slash + 1);
     }
+
+    // Add "_output" to the base filename
+    string modified_base = base_filename;
+    size_t dot_pos = modified_base.rfind('.');
+    if (dot_pos == string::npos) {
+        modified_base += "_output.txt";
+    } else {
+        modified_base.insert(dot_pos, "_output");
+    }
+
+    // Combine directory and new filename
+    string output_filename = output_dir + "/" + modified_base;
+    // --- End of Modified Logic ---
+
 
     // 4. Open the file streams
-    ifstream file(input_filename);
+    ifstream file(input_path);
     ofstream outfile(output_filename);
 
     if (!file.is_open()) {
-        cerr << "Error: Could not open input file " << input_filename << endl;
+        cerr << "Error: Could not open input file " << input_path << endl;
         return 1;
     }
     if (!outfile.is_open()) {
@@ -309,17 +327,18 @@ int main(int argc, char* argv[])
     }
 
     if (all_points.empty()) {
-        cerr << "Error: Input file " << input_filename << " contains no valid points." << endl;
+        cerr << "Error: Input file " << input_path << " contains no valid points." << endl;
         file.close();
         outfile.close();
         return 1;
     }
 
     // 6. Run the QuickHull algorithm
-    cout << "Processing " << all_points.size() << " points from " << input_filename << "..." << endl;
+    cout << "Processing " << all_points.size() << " points from " << input_path << "..." << endl;
     
     std::vector<QuickHull::Point> hull_points;
     try {
+        // Corrected the typo: computeConvexHull
         hull_points = QuickHull::computeConvexHull(all_points);
     } catch (const std::exception& e) {
         cerr << "QuickHull algorithm failed: " << e.what() << endl;

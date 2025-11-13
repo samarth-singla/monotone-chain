@@ -1,18 +1,20 @@
-#include<bits/stdc++.h> // This already includes <algorithm> for std::is_sorted
+#include<bits/stdc++.h>
 #include<fstream>
 #include<string>
+#include <sys/stat.h> // For mkdir
+
 using namespace std;
 
 struct pt {
     double x, y;
 };
 
-// ... (orientation, cw, ccw functions are UNCHANGED) ...
+// --- Orientation Functions ---
 int orientation(pt a, pt b, pt c) {
     double v = a.x*(b.y-c.y)+b.x*(c.y-a.y)+c.x*(a.y-b.y);
-    if (v < 0) return -1; 
-    if (v > 0) return +1;
-    return 0;
+    if (v < 0) return -1; // clockwise
+    if (v > 0) return +1; // counter-clockwise
+    return 0; // collinear
 }
 
 bool cw(pt a, pt b, pt c, bool include_collinear) {
@@ -24,24 +26,21 @@ bool ccw(pt a, pt b, pt c, bool include_collinear) {
     return o > 0 || (include_collinear && o == 0);
 }
 
-// --- !!! MODIFIED convex_hull function !!! ---
+// --- OPTIMIZED Convex Hull Function ---
 void convex_hull(vector<pt>& a, bool include_collinear = false) {
     if (a.size() <= 2)
         return;
 
-    // --- 1. Define the comparison lambda once ---
+    // Define the comparison lambda
     auto lexicographical_compare = [](pt a, pt b) {
         return make_pair(a.x, a.y) < make_pair(b.x, b.y);
     };
 
-    // --- 2. Add the O(n) check ---
-    //    Only sort if the vector is NOT already sorted.
+    // Add the O(n) check
     if (!is_sorted(a.begin(), a.end(), lexicographical_compare)) {
-        // --- 3. Run the O(n log n) sort only if needed ---
+        // Run the O(n log n) sort only if needed
         sort(a.begin(), a.end(), lexicographical_compare);
     }
-    // --- End of optimization ---
-
 
     pt p1 = a[0], p2 = a.back();
     vector<pt> up, down;
@@ -71,7 +70,7 @@ void convex_hull(vector<pt>& a, bool include_collinear = false) {
         a.push_back(down[i]);
 }
 
-// --- solve function remains unchanged ---
+// --- Solve Function ---
 void solve(vector<pt>& a, ofstream &outfile, int p)
 {
     // The vector 'a' already contains all points.
@@ -79,45 +78,58 @@ void solve(vector<pt>& a, ofstream &outfile, int p)
     // Process the convex hull
     convex_hull(a, 0); 
     
-    // Output the results WITHOUT "CASE 1"
+    // Output the results
     for(size_t i = 0; i < a.size(); i++)
     {
-        // Use fixed and setprecision for double coordinates
         outfile << fixed << setprecision(8) << a[i].x << " " << a[i].y << endl;
     }
 }
 
-// --- main function remains unchanged ---
+// --- Main Function (with new output logic) ---
 int main(int argc, char* argv[])
 {
-    // 1. Check for the correct number of command-line arguments
+    // 1. Check arguments
     if (argc != 2) {
-        // Print error message to cerr (standard error)
         cerr << "Error: Incorrect usage." << endl;
-        // argv[0] is the name of the program itself
         cerr << "Usage: " << argv[0] << " <input_filename.txt>" << endl; 
-        return 1; // Return an error code
+        return 1; 
     }
 
-    // 2. Get the input filename from the command-line argument
-    string input_filename = argv[1]; 
+    // 2. Get the input filename
+    string input_path = argv[1]; 
 
-    // 3. Construct the output filename
-    string output_filename = input_filename;
-    size_t dot_pos = output_filename.rfind('.');
+    // --- 3. CONSTRUCT OUTPUT FILENAME ---
+    string output_dir = "OPTIMIZED_MONOTONE_OUTPUT";
     
-    if (dot_pos == string::npos) {
-        output_filename += "_output.txt";
-    } else {
-        output_filename.insert(dot_pos, "_output");
+    // Create the directory (0777 are permissions).
+    mkdir(output_dir.c_str(), 0777); 
+    
+    // Get the base filename from the input path
+    string base_filename = input_path;
+    size_t last_slash = input_path.rfind('/');
+    if (last_slash != string::npos) {
+        base_filename = input_path.substr(last_slash + 1);
     }
+
+    // Add "_output" to the base filename
+    string modified_base = base_filename;
+    size_t dot_pos = modified_base.rfind('.');
+    if (dot_pos == string::npos) {
+        modified_base += "_output.txt";
+    } else {
+        modified_base.insert(dot_pos, "_output");
+    }
+
+    // Combine directory and new filename
+    string output_filename = output_dir + "/" + modified_base;
+    // --- End of Modified Logic ---
 
     // 4. Open the file streams
-    ifstream file(input_filename);
+    ifstream file(input_path); // Use original input_path
     ofstream outfile(output_filename);
 
     if (!file.is_open()) {
-        cerr << "Error: Could not open input file " << input_filename << endl;
+        cerr << "Error: Could not open input file " << input_path << endl;
         return 1;
     }
     if (!outfile.is_open()) {
@@ -133,15 +145,14 @@ int main(int argc, char* argv[])
     }
 
     if (all_points.empty()) {
-        cerr << "Error: Input file " << input_filename << " contains no valid points." << endl;
+        cerr << "Error: Input file " << input_path << " contains no valid points." << endl;
         file.close();
         outfile.close();
         return 1;
     }
 
     // 6. Run the solve function once
-    cout << "Processing " << all_points.size() << " points from " << input_filename << "..." << endl;
-    // We pass 1 for 'p' but the solve function no longer uses it.
+    cout << "Processing " << all_points.size() << " points from " << input_path << "..." << endl;
     solve(all_points, outfile, 1); 
 
     // 7. Close files and exit
