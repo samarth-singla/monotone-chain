@@ -43,6 +43,7 @@ $(VENV_DIR)/bin/activate:
 generate: setup
 	@echo "--- Generating datasets ---"
 	$(PYTHON) generate_cases.py
+	$(PYTHON) dataset_gen.py
 
 # Run the benchmark on the algorithms specified in ALGO_LIST
 benchmark: all setup

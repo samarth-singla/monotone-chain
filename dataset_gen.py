@@ -9,19 +9,17 @@ OUTPUT_DIR = "datasets"
 # --- Helper Function ---
 
 def save_points(data, filename, directory=OUTPUT_DIR):
-    """Saves a 2D numpy array to a 'x,y' text file."""
+    """Saves a 2D numpy array to a 'x y' text file compatible with C++."""
     
     filepath = os.path.join(directory, filename)
     print(f"    Saving {data.shape[0]:,} points to {filepath}...")
     
-    # Save with 8 decimal places of precision
+    # Save using SPACE delimiter and NO HEADER
     np.savetxt(
         filepath, 
         data, 
-        delimiter=',',
-        fmt='%.8f',
-        header='x,y',
-        comments='' # Removes the '#' from the header line
+        delimiter=' ',  # <--- Changed to space
+        fmt='%.8f'      # No header argument
     )
 
 # --- Distribution Generators (1-9) ---
